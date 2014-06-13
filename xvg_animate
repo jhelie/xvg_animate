@@ -1,0 +1,365 @@
+#!/bin/bash
+
+#-------------------------------------------------------------
+# Notes
+#-------------------------------------------------------------
+
+#how to use: ./thickness -h
+
+#location of python script
+path_to_py_file_NIS=/sansom/s98/orie2528/phd/SBCB/scripts/xvg_animate/ 	#user NIS path to python file
+path_to_py_file_local=/Users/Hal/phd/SBCB/scripts/xvg_animate/			#user customised path (e.g. to use on your laptop)
+
+#-------------------------------------------------------------
+# set parameters default values
+#-------------------------------------------------------------
+path_to_py_file=$path_to_py_file_NIS
+xvgfilename1="no"
+xvgfilename2="no"
+lines_upper="no"
+lines_lower="no"
+lines_offset=0
+lines_skip=10
+lines_err="no"
+lines_thick=3
+avconv_duration=0
+nb_graphs=1
+nb_smoothing=0
+fig_dpi="100"
+fig_size="8,6.2"
+colour_file="no"
+mask_labels="no"
+captions_x="1:x axis 1/2:x axis 2"
+captions_y="1:y axis 1/2:y axis 2"
+captions_p="1:title 1/2:title 2"
+boundaries_upper="x:auto,auto/y:auto,auto"
+boundaries_lower="x:auto,auto/y:auto,auto"
+options=""																#to append to filename to create output folder name
+version="1.0.5"
+cmd_log="Command issued (${version}): xvg_animate"
+
+#-------------------------------------------------------------
+# retriever user defined parameters
+#-------------------------------------------------------------
+
+while getopts ":a:b:c:d:e:f:g:l:n:o:p:r:s:t:u:v:w:x:y:hm" opt; do
+	case $opt in
+	a)
+	avconv_duration=$OPTARG
+	cmd_log=${cmd_log}" -a "$OPTARG
+      ;;
+	b)
+	lines_offset=$OPTARG
+	cmd_log=${cmd_log}" -b "$OPTARG
+	options=${options}"_b"$OPTARG
+      ;;
+    c)
+	colour_file=$OPTARG
+    cmd_log=${cmd_log}" -c "$OPTARG
+	options=${options}"_c"
+      ;;
+    d)
+	fig_size=$OPTARG
+    cmd_log=${cmd_log}" -d "$OPTARG
+      ;;
+    e)
+	lines_err=$OPTARG
+    cmd_log=${cmd_log}" -e "$OPTARG
+	options=${options}"_e"
+      ;;
+    f)
+	xvgfilename1=$OPTARG
+    cmd_log=${cmd_log}" -f "$OPTARG
+      ;;
+    g)
+	xvgfilename2=$OPTARG
+    cmd_log=${cmd_log}" -g "$OPTARG
+      ;;
+    l)
+	lines_lower=$OPTARG
+    cmd_log=${cmd_log}" -l "$OPTARG
+      ;;
+    m)
+	mask_labels="yes"
+    options=${options}"_m"
+    cmd_log=${cmd_log}" -m"
+      ;;
+    n)
+	nb_smoothing=$OPTARG
+    options=${options}"_n"$OPTARG
+    cmd_log=${cmd_log}" -n "$OPTARG
+      ;;
+    o)
+	nb_graphs=$OPTARG
+    options=${options}"_o"$OPTARG
+    cmd_log=${cmd_log}" -o "$OPTARG
+      ;;
+    p)
+	captions_p=$OPTARG
+    cmd_log=${cmd_log}" -p "$OPTARG
+      ;;
+    r)
+	fig_dpi=$OPTARG
+    options=${options}"_r"$OPTARG
+    cmd_log=${cmd_log}" -r "$OPTARG
+      ;;
+    s)
+	lines_skip=$OPTARG
+    cmd_log=${cmd_log}" -s "$OPTARG
+      ;;
+    t)
+	lines_thick=$OPTARG
+    cmd_log=${cmd_log}" -t "$OPTARG
+      ;;
+    u)
+	lines_upper=$OPTARG
+    cmd_log=${cmd_log}" -u "$OPTARG
+      ;;
+    v)
+	boundaries_upper=$OPTARG
+    cmd_log=${cmd_log}" -v "$OPTARG
+      ;;
+    w)
+	boundaries_lower=$OPTARG
+    cmd_log=${cmd_log}" -w "$OPTARG
+      ;;
+	x)
+	captions_x=$OPTARG
+    cmd_log=${cmd_log}" -x "$OPTARG
+      ;;
+	y)
+	captions_y=$OPTARG
+    cmd_log=${cmd_log}" -y "$OPTARG
+      ;;
+    h)
+	echo ""	
+	echo "*******************"
+	echo "v"${version}
+	echo "Author: Jean Helie"
+	echo "*******************"
+	echo ""
+	echo "[ Description ]"
+	echo ""
+	echo "This script allows to create a time lapse of the plotting of the information contained in an xvg file."
+	echo "It outputs numbered png and svg files that are ready to be concatenated into a movie using your."
+	echo "preferred utility to do so."
+	echo ""
+	echo "By default you should try to use the avconv utility to create a mp4 movie, using a command similar to:"
+	echo ""
+	echo " avconv -qscale 0 -r frame_rate -i xvg_graph_%05d.png -c:v libx264 -c:a copy xvg_movie.mp4"
+	echo ""
+	echo "If the desired duration is specified this script will tell you the frame_rate to use to achieve it with "
+	echo "the pngs created (not rocket science but a convenient shortcut:)."
+	echo ""
+	echo "[ Notes ]"
+	echo ""
+	echo "1. The format of the pictures can be either a single graph or two graphs vertically stacked. This is"
+	echo "   controlled by the -o option. The script can also take two xvg files as inputs (-f and -g)."
+	echo "   Howver the nb of graphs and the nb of xvg files are independent, and the graph(s) can contained"
+	echo "   data from a single xvg file or from two xvg files."
+	echo "   The following combinations are thus possible:"
+	echo "    -1 graph, 1 xvg: a single graph containing data from a single xvg file"
+	echo "    -1 graph, 2 xvg: a single graph containing data from the two specified xvg files"	
+	echo "    -2 graphs, 1 xvg: two vertically stacked graphs containing data from a single xvg file"
+	echo "    -2 graphs, 2 xvg: two vertically stacked graphs containing data from the two specified xvg files"
+	echo "   See notes below regarding how to define which data from which file goes into which graph."
+	echo ""
+	echo "2. The columns of the xvg file(s) that should be used for plotting are defined for each graphs"
+	echo "   independently via the -u and -l options (in case only one graph is to be plotted, only the"
+	echo "   -u option needs to be specified). The format for specifying lines should be:"
+	echo "    'xvg_file_nb:x_column_nb,y1_column_nb,y2_column_nb/xvg_file_nb:x_column_nb,y1_column_nb'"
+	echo "   where the numbering of xvg file is 1-based and that of xvg columns is 0-based. As many y columns"
+	echo "   as contained in the xvg files can be specified."
+	echo "   Examples:"
+	echo "    -1 graph, 1 xvg: '-u 1:0,1,4'"
+	echo "    -1 graph, 2 xvg: '-u 1:0,1,4/2:0,1,2,3'"
+	echo "    -2 graphs, 1 xvg: '-u 1:0,1,2 -l 1:0,3,4'"
+	echo "    -2 graphs, 2 xvg: '-u 1:0,1,2/2:0,1,2 -l 1:0,3,4'"
+	echo ""
+	echo "3. The strings for the axis labels and plot titles of the graphs can be defined in a way similar to"
+	echo "   that explained in note 2 above with the exception that quotation marks must be used. The graphs"
+	echo "   are referred to with numbers with the upper being 1 and the lower one being 2."
+	echo "   Example: "
+	echo "    -2 graphs, 2 xvg: '-x \"1:x_axis_upper/2:x_axis_lower\" -y \"1:y_axis_upper/2:y_axis_lower\"'"
+	echo "   NB:"
+	echo "   If 2 plots are specified and if the options -x,-y and -p are specified they must be defined for both"
+	echo "   plots - i.e. you either specify it for the two plots or none."
+	echo ""
+	echo "4. A text file can be supplied to define the legend and the colour to be used for each line plotted."
+	echo "   The information in this text file should be placed on single lines with the following format:"
+	echo "    'xvg_file_nb,xvg_column_nb,column_name,column_colour'"
+	echo "   (xvg_file_nb is 1 based and xvg_column_nb is 0 based and colours can be specified as hexadecimal)"
+	echo "   code or standard matplotlib one letter code). This means that a given column in an xvg file"
+	echo "   will be represented the same way in both the upper and lower graph (if present)."
+	echo "   Example:"
+	echo "    xvgfilename1,1,POPC,r"
+	echo "    xvgfilename2,1,POPC,#C0C0C0"
+	echo "    xvgfilename2,2,POPE,#FFFFFF"
+	echo "   NB:"
+	echo "    - such a file is automatically produced along with xvg files written by the scripts order_param,"
+	echo "      thickness, cluster_lip, cluster_param."
+	echo "    - the color can be automatically attributed (using the jet color map) by specifying 'auto' instead"
+	echo "      as a colour code."
+	echo "    - in case no colour file is supplied the jet colour map will be used to generate colours if there"
+	echo "      are several lines on a plot"
+	echo ""
+	echo "5. A confidence interval can be plotted as a shaded area for each line. To define these, the -e option"
+	echo "   can be used to specify which column contains the error associated to another column. The error"
+	echo "   value will be added and substracted to the value of the relevant column and the enclosed area will"
+	echo "   be shaded accordingly. The format should be:"
+	echo "   '-e xvgfile_nb:data1_col_nb-err1_col_nb,data2_col_nb-err2_col_nb;xvgfile_nb:data1_col_nb-err1_col_nb'"
+	echo "   Example: "
+	echo "    '-e 1:1-3,2-4/2:1,5'"
+	echo ""
+	echo "6. Exact boundaries of the plot(s) can be enforced by using the -v option (resp. the -w option for the"	
+	echo "   second plot). The range of the x-axis and of the y-axis can be specified or can be determined"
+	echo "   automatically by writing 'auto'. The format to use is as follows (note the use of quotation marks):"
+	echo "    '-v \"x:x_min,x_max/y:y_min,y_max\"'"
+	echo "   Example:"
+	echo "    '-v \"x:0,auto/y:-0.5,1\"'"
+	echo ""
+	echo "[ Usage ]"
+	echo ""	
+	echo "Option    Default  	Description                    "
+	echo "-----------------------------------------------------"
+	echo "-f		: xvg file"
+	echo "-g		: xvg file (optional)"
+	echo "-b [0]		: initial line offset "
+	echo "-s [5]		: move forward X lines for each image"
+	echo "-o [1]		: one graph, see note 1"
+	echo "    2 		: two graphs (vertically stacked)"
+	echo "-u		: composition of upper (resp. only) graph, see note 2"
+	echo "-l		: composition of lower graph, see note 2"
+	echo "-e		: definition of error areas, see note 5"
+	echo "-n		: nb of points to use for smoothing (optional)"
+	echo ""
+	echo "Graphs annotations  "
+	echo "-----------------------------------------------------"
+	echo "-m		: mask lines labels"
+	echo "-x		: labelling of x axis, see note 3"
+	echo "-y		: labelling of y axis, see note 3"
+	echo "-p		: labelling of plots, see note 3"
+	echo "-c		: legend and colouring options, see note 4"
+	echo "-v		: boundaries of the upper plot (optional, see note 6)"
+	echo "-w		: boundaries of the lower plot (optional, see note 6)"	
+	echo ""
+	echo "Graphs quality  "
+	echo "-----------------------------------------------------"
+	echo "-a		: show avconv frame rate to use to achieve this duration"
+	echo "-t [3]		: thickness of lines"
+	echo "-d [8,6.2]	: figure dimensions 'width,height', in inches"
+	echo "-r [100]	: figure resolution, in dpi"
+	echo ""
+	echo ""
+	exit
+	  ;;
+    \?)
+      echo "Invalid option: -$OPTARG" >&2
+      ;;
+	esac
+done
+
+#-------------------------------------------------------------
+# process parameters
+#-------------------------------------------------------------
+
+#sanity check
+if [ "$xvgfilename1" = "no" -a "$xvgfilename2" = "no" ]
+then
+	echo "Error: no xvg file specified."
+	exit
+elif [ ! -f "$xvgfilename1" ]
+then
+	echo "Error: first xvg file $xvgfilename1 not found."
+	exit
+elif [ "$xvgfilename2" != "no" -a ! -f "$xvgfilename2" ]
+then
+	echo "Error: second xvg file $xvgfilename2 not found."
+	exit
+elif [ "$nb_graphs" -lt "1" -o "$nb_graphs" -gt "2" ]
+then
+	echo "Error: invalid value for -o, see xvg_animate -h."
+	exit
+elif [ "$lines_upper" = "no" ]
+then
+	echo "Error: the -u option needs to be specified."
+	exit
+elif [ "$lines_lower" = "no" -a "$nb_graphs" = "2" ]
+then
+	echo "Error: two graphs specified but the -l option wasn't specified."
+	exit
+elif [ "$lines_lower" != "no" -a "$nb_graphs" = "1" ]
+then
+	echo "Error: the -l option was defined but only one graph was specified."
+	exit
+fi
+
+#determine output folder name
+options=${options}"_s"$lines_skip
+if [ "$xvgfilename2" = "no" ]
+then
+	output_foldername=xvg_animate_${xvgfilename1%.xvg}${options}
+else
+	output_foldername=xvg_animate_${xvgfilename1%.xvg}_${xvgfilename2%.xvg}${options}
+fi
+
+#create whether output folder exists
+if [ -d "$output_foldername" ]
+then
+	echo "Error: folder $output_foldername already exist. Rename or delete it first."
+	exit
+#create output folders if not
+else
+	mkdir $output_foldername
+	cd $output_foldername
+	mkdir png
+	if [ "$nb_smoothing" -gt "1" ]
+	then
+		mkdir png_smoothed
+	fi
+	cd ..
+fi
+
+#-------------------------------------------------------------
+# create log file with user's input
+#-------------------------------------------------------------
+
+#save command line into a log file
+echo $cmd_log > $output_foldername/xvg_animate.log
+
+#copy xvg files into folder
+cp $xvgfilename1 $output_foldername/
+if [ "$xvgfilename2" != "no" ]
+then
+	cp $xvgfilename2 $output_foldername/
+fi
+
+#copy colour file
+if [ "$colour_file" != "no" ]
+then
+	cp $colour_file $output_foldername/colours.sele
+fi
+
+#-------------------------------------------------------------
+# call script
+#-------------------------------------------------------------
+
+python ${path_to_py_file}xvg_animate.py $xvgfilename1 $xvgfilename2 $output_foldername $nb_graphs $lines_offset $lines_skip $lines_upper $lines_lower $lines_err "${captions_x}" "${captions_y}" "${captions_p}" $colour_file $nb_smoothing $fig_dpi $fig_size $boundaries_upper $boundaries_lower $lines_thick $mask_labels $avconv_duration $version
+return_status=$?
+
+#----------------------------------------------------------------
+# after python run
+#----------------------------------------------------------------
+if [ "$return_status" != "1" ]
+then
+	echo ""
+	echo "Finished successfully! Check output in ./$output_foldername/"
+	echo ""
+else
+	echo ""
+	echo "Error, early termination! (must implement clean-up when failed...)"
+	echo ""
+fi
+
+
+	
