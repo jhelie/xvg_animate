@@ -1,0 +1,32 @@
+xvg_animate
+===========
+
+Python utility to help creating time-lapse plotting of the content of .xvg-like files.
+
+Usage
+-----
+Given by ./xvg_animate -h
+
+Features
+--------
+- data can be used from 1 or 2 xvg files
+- 1 or 2 (vertically stacked) plots can be produced
+- data can be smoothed
+- error margins can be plotted as shaded areas
+- control of "time" step size
+- outputs the frame rate to use to achieve a specified movie duration
+
+Requirements
+------------
+- input files must not contained empty lines
+- data in input files must be separated by tabulations and/or spaces
+
+Warning
+-------
+- the script doesn't produce the movie for you, just pngs ready to be concatenated into a movie
+- multiple y-axis on a plot are not handled
+- transparent background can't be produced (they can... but it won't carry into the movie format)
+
+To do
+-----
+- automatic setting of the y axis doesn't take into account error bars for now
