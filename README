@@ -9,7 +9,7 @@ Given by ./xvg_animate -h
 
 Features
 --------
-- data can be used from 1 or 2 xvg files
+- data can be read from several xvg files
 - 1 or 2 (vertically stacked) plots can be produced
 - data can be smoothed
 - error margins can be plotted as shaded areas
