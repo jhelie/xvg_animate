@@ -30,7 +30,7 @@ fontP=FontProperties()
 
 #create parser
 #=============
-version_nb="1.0.6"
+version_nb="1.0.7"
 parser = argparse.ArgumentParser(prog='xvg_animate', usage='', add_help=False, formatter_class=argparse.RawDescriptionHelpFormatter, description=\
 '''
 **********************************************
@@ -134,6 +134,7 @@ Option	      Default  	Description
 -----------------------------------------------------
 -f			: xvg file(s)
 -c			: file containing legend and colouring info, see note 4
+-o			: name of output folder
 --upper_cols		: composition of upper (resp. only) graph, see note 2
 --lower_cols		: composition of lower graph, see note 2
 --error_cols		: definition of error areas, see note 5
