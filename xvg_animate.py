@@ -126,7 +126,6 @@ it with the pngs created (not rocket science but a convenient shortcut:).
    Each come with its own set of options but a command similar to the one below should work:
    
    avconv -qscale 0 -r your_frame_rate -i xvg_graph_%05d.png -c:v libx264 -c:a copy xvg_movie.mp4
-	
 
 [ Usage ]
 	
