@@ -30,7 +30,7 @@ fontP=FontProperties()
 
 #create parser
 #=============
-version_nb="1.0.7"
+version_nb="1.0.6"
 parser = argparse.ArgumentParser(prog='xvg_animate', usage='', add_help=False, formatter_class=argparse.RawDescriptionHelpFormatter, description=\
 '''
 **********************************************
