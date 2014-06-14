@@ -5,7 +5,7 @@ Python utility to help creating time-lapse plotting of the content of .xvg-like 
 
 Usage
 -----
-Given by ./xvg_animate -h
+Given by python xvg_animate.py -h
 
 Features
 --------
