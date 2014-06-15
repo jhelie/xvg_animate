@@ -148,7 +148,7 @@ Graphs annotations
 --ylabel		: labelling of y axis, see note 3
 --titles		: labelling of plots, see note 3
 --nolegend		: mask lines labels
---thickness [3]		: thickness of lines
+--thickness 	3	: thickness of lines
 --upper_range		: boundaries of the upper plot (optional, see note 6)
 --lower_range		: boundaries of the lower plot (optional, see note 6)	
 
