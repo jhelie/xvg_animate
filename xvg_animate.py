@@ -30,7 +30,7 @@ fontP=FontProperties()
 
 #create parser
 #=============
-version_nb="2.0.0"
+version_nb="2.0.1"
 parser = argparse.ArgumentParser(prog='xvg_animate', usage='', add_help=False, formatter_class=argparse.RawDescriptionHelpFormatter, description=\
 '''
 **********************************************
@@ -210,12 +210,6 @@ args.boundaries_lower=args.boundaries_lower[0]
 args.fig_size=args.fig_size[0]
 args.fig_dpi=args.fig_dpi[0]
 args.avconv_duration=args.avconv_duration[0]
-
-#debug
-print sys.argv
-if '-f' in sys.argv:
-	print "in"
-	sys.exit(0)
 
 #sanity check
 #============
