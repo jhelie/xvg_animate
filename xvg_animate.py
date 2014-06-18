@@ -30,7 +30,7 @@ fontP=FontProperties()
 
 #create parser
 #=============
-version_nb="2.0.1"
+version_nb="2.0.2"
 parser = argparse.ArgumentParser(prog='xvg_animate', usage='', add_help=False, formatter_class=argparse.RawDescriptionHelpFormatter, description=\
 '''
 **********************************************
@@ -68,13 +68,14 @@ it with the pngs created (not rocket science but a convenient shortcut:).
    The format for specifying lines should be:
     'xvg_file_nb:x_column_nb,y1_column_nb,y2_column_nb/xvg_file_nb:x_column_nb,y1_column_nb'
    where the numbering of xvg file is 1-based and that of xvg columns is 0-based. As many y columns
-   as contained in the xvg files can be specified.
+   as contained in the xvg files can be specified and you can use '-' to specify a range of
+   columns.
  
    Examples:
-    -1 graph, 1 xvg: --upper_cols 1:0,1,4
+    -1 graph, 1 xvg: --upper_cols 1:0,1,3-5
     -1 graph, 2 xvg: --upper_cols 1:0,1,4/2:0,1,2,3
-    -2 graphs, 1 xvg: --upper_cols 1:0,1,2 --lower_cols 1:0,3,4
-    -2 graphs, 2 xvg: --upper_cols 1:0,1,2/2:0,1,2 --lower_cols 1:0,3,4
+    -2 graphs, 1 xvg: --upper_cols 1:0,1,2 --lower_cols 1:0,3-5
+    -2 graphs, 2 xvg: --upper_cols 1:0,1,2/2:0,1,2 --lower_cols 1:0,1,3-7,10
 
 3. The strings for the axis labels and plot titles of the graphs can be defined in a way similar to
    that explained in note 2 above with the exception that quotation marks must be used. The graphs
