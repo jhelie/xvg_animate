@@ -279,12 +279,12 @@ def identify_columns():
 	#===========
 	tmp_files=args.lines_upper.split('/')
 	if len(tmp_files)>2:
-		error_format("u")
+		error_format("--upper_cols")
 	else:
 		for f in tmp_files:
 			tmp_f=f.split(':')
 			if len(tmp_f)!=2:
-				error_format("u")
+				error_format("--upper_cols")
 			else:
 				#retrieve xvg file referred to
 				f_index=int(tmp_f[0])
@@ -300,22 +300,33 @@ def identify_columns():
 				
 				#retrieve cols of the y axis
 				for c in tmp_xvg_c[1:]:
-					graph_columns["upper"]["y axis"][f_index].append(int(c))
-					xvg_columns[f_index].append(int(c))
-					if int(c) not in xvg_data[f_index].keys():
-						xvg_data[f_index][int(c)]=[]
+					tmp_range=c.split('-')
+					if len(tmp_range)>2:
+						error_format("--upper_cols")
+					elif len(tmp_range)==2:
+						for cc in range(int(tmp_range[0]), int(tmp_range[1])+1):
+							graph_columns["upper"]["y axis"][f_index].append(cc)
+							xvg_columns[f_index].append(cc)
+							if cc not in xvg_data[f_index].keys():
+								xvg_data[f_index][cc]=[]
+					else:
+						cc=int(tmp_range[0])
+						graph_columns["upper"]["y axis"][f_index].append(cc)
+						xvg_columns[f_index].append(cc)
+						if cc not in xvg_data[f_index].keys():
+							xvg_data[f_index][cc]=[]
 	
 	#lower graph
 	#===========
 	if args.nb_graphs==2:
 		tmp_files=args.lines_lower.split('/')
 		if len(tmp_files)>2:
-			error_format("l")
+			error_format("--lower_cols")
 		else:
 			for f in tmp_files:
 				tmp_f=f.split(':')
 				if len(tmp_f)!=2:
-					error_format("u")
+					error_format("--lower_cols")
 				else:
 					#retrieve xvg file referred to
 					f_index=int(tmp_f[0])
@@ -331,10 +342,21 @@ def identify_columns():
 					
 					#retrieve cols of the y axis
 					for c in tmp_xvg_c[1:]:
-						graph_columns["lower"]["y axis"][f_index].append(int(c))
-						xvg_columns[f_index].append(int(c))
-						if int(c) not in xvg_data[f_index].keys():
-							xvg_data[f_index][int(c)]=[]
+						tmp_range=c.split('-')
+						if len(tmp_range)>2:
+							error_format("--lower_cols")
+						elif len(tmp_range)==2:
+							for cc in range(int(tmp_range[0]), int(tmp_range[1])+1):
+								graph_columns["lower"]["y axis"][f_index].append(cc)
+								xvg_columns[f_index].append(cc)
+								if cc not in xvg_data[f_index].keys():
+									xvg_data[f_index][cc]=[]
+						else:
+							cc=int(tmp_range[0])
+							graph_columns["lower"]["y axis"][f_index].append(cc)
+							xvg_columns[f_index].append(cc)
+							if cc not in xvg_data[f_index].keys():
+								xvg_data[f_index][cc]=[]
 			
 	#errors
 	#======
