@@ -1,20 +1,17 @@
-################################################################################################################################################
-# IMPORT MODULES
-################################################################################################################################################
-
-#import general python tools
+#generic python modules
 import argparse
 import operator
 from operator import itemgetter
 import sys, os, shutil
 import os.path
 
-################################################################################################################################################
+##########################################################################################
 # RETRIEVE USER INPUTS
-################################################################################################################################################
+##########################################################################################
 
+#=========================================================================================
 #create parser
-#=============
+#=========================================================================================
 version_nb="2.0.3"
 parser = argparse.ArgumentParser(prog='xvg_animate', usage='', add_help=False, formatter_class=argparse.RawDescriptionHelpFormatter, description=\
 '''
@@ -189,9 +186,9 @@ parser.add_argument('--version', action='version', version='%(prog)s v' + versio
 #deal with help
 parser.add_argument('-h','--help', action='help', help=argparse.SUPPRESS)
 
-#=======================================================================
+#=========================================================================================
 # store inputs
-#=======================================================================
+#=========================================================================================
 args=parser.parse_args()
 args.colour_file=args.colour_file[0]
 args.output_folder=args.output_folder[0]
@@ -211,9 +208,9 @@ args.fig_size=args.fig_size[0]
 args.fig_dpi=args.fig_dpi[0]
 args.avconv_duration=args.avconv_duration[0]
 
-#=======================================================================
+#=========================================================================================
 # import modules (doing it now otherwise might crash before we can display the help menu!)
-#=======================================================================
+#=========================================================================================
 
 #generic science modules
 try:
@@ -268,7 +265,6 @@ if args.lines_lower!="no" and args.nb_graphs==1:
 #=======================================================================
 # create folders and log file
 #=======================================================================
-
 if args.output_folder=="no":
 	args.output_folder="xvg_animate_" + args.xvg_names[0][:-4]
 if os.path.isdir(args.output_folder):
@@ -297,9 +293,13 @@ else:
 		shutil.copy2(args.colour_file,args.output_folder + "/")
 
 
-################################################################################################################################################
-# FUNCTIONS
-################################################################################################################################################
+##########################################################################################
+# FUNCTIONS DEFINITIONS
+##########################################################################################
+
+#=========================================================================================
+# data loading
+#=========================================================================================
 
 def error_format(option_name):
 	print "Error: the format of the -" +str(option_name) + " option is incorrect, see xvg_animate -h"
@@ -727,6 +727,33 @@ def graph_detect_boundaries():
 				graph_boundaries_smoothed["lower"]["y axis"][1]=float(graph_boundaries_smoothed["lower"]["y axis"][1])
 				
 	return
+
+#=========================================================================================
+# data structures
+#=========================================================================================
+
+#=========================================================================================
+# core functions
+#=========================================================================================
+
+def rolling_avg(loc_list):
+	
+	loc_arr=numpy.asarray(loc_list)
+	shape=(loc_arr.shape[-1]-args.nb_smoothing+1,args.nb_smoothing)
+	strides=(loc_arr.strides[-1],loc_arr.strides[-1])   	
+	return numpy.average(numpy.lib.stride_tricks.as_strided(loc_arr, shape=shape, strides=strides), -1)
+def smooth_data():
+		
+	for f_index in xvg_files:
+		for c_index in xvg_columns[f_index]:
+			xvg_data_smoothed[f_index][c_index]=rolling_avg(xvg_data[f_index][c_index])
+	
+	return
+
+#=========================================================================================
+# core outputs
+#=========================================================================================
+
 def graph_xvg(loc_index, loc_counter):
 
 	#create filenames
@@ -873,23 +900,10 @@ def graph_xvg_smoothed(loc_index, loc_counter):
 	plt.close()
 	
 	return
-def rolling_avg(loc_list):
-	
-	loc_arr=numpy.asarray(loc_list)
-	shape=(loc_arr.shape[-1]-args.nb_smoothing+1,args.nb_smoothing)
-	strides=(loc_arr.strides[-1],loc_arr.strides[-1])   	
-	return numpy.average(numpy.lib.stride_tricks.as_strided(loc_arr, shape=shape, strides=strides), -1)
-def smooth_data():
-		
-	for f_index in xvg_files:
-		for c_index in xvg_columns[f_index]:
-			xvg_data_smoothed[f_index][c_index]=rolling_avg(xvg_data[f_index][c_index])
-	
-	return
 
-################################################################################################################################################
+##########################################################################################
 # DATA STRUCTURES
-################################################################################################################################################
+##########################################################################################
 
 #the xvg files and the graphs indexes are 1-based while the xvg columns indexes are 0-based
 xvg_files=[]
@@ -964,9 +978,9 @@ else:
 			else:
 				error_format("--lower_range")
 
-################################################################################################################################################
+##########################################################################################
 # ALGORITHM
-################################################################################################################################################
+##########################################################################################
 
 #read data from the xvg files
 #----------------------------
