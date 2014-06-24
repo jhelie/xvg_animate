@@ -8,21 +8,6 @@ import operator
 from operator import itemgetter
 import sys, os, shutil
 import os.path
-import math
-
-#import python extensions/packages to manipulate arrays
-import numpy 				#to manipulate arrays
-import scipy 				#mathematical tools and recipesimport MDAnalysis
-
-#import graph building module
-import matplotlib as mpl
-mpl.use('Agg')
-import pylab as plt
-import matplotlib.cm as cm			#colours library
-import matplotlib.ticker
-from matplotlib.ticker import MaxNLocator
-from matplotlib.font_manager import FontProperties
-fontP=FontProperties()
 
 ################################################################################################################################################
 # RETRIEVE USER INPUTS
@@ -30,68 +15,81 @@ fontP=FontProperties()
 
 #create parser
 #=============
-version_nb="2.0.2"
+version_nb="2.0.3"
 parser = argparse.ArgumentParser(prog='xvg_animate', usage='', add_help=False, formatter_class=argparse.RawDescriptionHelpFormatter, description=\
 '''
 **********************************************
 v''' + version_nb + '''
-author: Jean Helie
-git: https://github.com/jhelie/xvg_animate.git
+author: Jean Helie (jean.helie@bioch.ox.ac.uk)
+git: https://github.com/jhelie/xvg_animate
 **********************************************
 
-[ Description ]
+[ DESCRIPTION ]
 
-This script allows to create a time lapse of the plotting of the data contained in .xvg-like file.
-It outputs numbered png and svg files that are ready to be concatenated into a movie using your
-preferred utility to do so (see note 7).
+This script allows to create a time lapse plotting of the data contained in .xvg like
+files, i.e. in columns separated by space and/or tabulations.
 
-If the desired movie duration is specified this script will tell you the frame_rate to use to achieve
-it with the pngs created (not rocket science but a convenient shortcut:).
+It outputs numbered png and svg files that are ready to be concatenated into a movie using
+your preferred utility to do so (see note 7).
 
-[ Notes ]
+If the desired movie duration is specified this script will tell you the frame_rate to use
+to achieve it with the pngs created (not rocket science but a convenient shortcut).
 
-1. The format of the pictures can be either a single graph or two graphs vertically stacked. This is
-   controlled by the --graph option. The script can take several xvg files as inputs:
-    -f file1.xvg file2.xvg ... 
-   However --graph and -f are independent: the graph(s) can contain data from one or several xvg.
+[ REQUIREMENTS ]
+
+The following python modules are needed :
+ - matplotlib
+
+[ NOTES ]
+
+1. The format of the pictures can be either a single graph or two graphs vertically
+   stacked. This is controlled by the --graph option. The script can take several xvg 
+   files as inputs:
+    -> '-f file1.xvg file2.xvg ... '
+   However --graph and -f are independent: the graph(s) can contain data from one or
+   several xvg.
    
    For example the following combinations are possible:
-    -1 graph, 1 xvg: a single graph containing data from a single xvg file
-    -1 graph, 2 xvg: a single graph containing data from the two specified xvg files	
-    -2 graphs, 1 xvg: two vertically stacked graphs containing data from a single xvg file
-    -2 graphs, 2 xvg: two vertically stacked graphs containing data from the two specified xvg files
-    -etc... 
+    -> 1 graph, 1 xvg: single graph with data from a single xvg file
+    -> 1 graph, 2 xvg: single graph with data from two xvg files	
+    -> 2 graphs, 1 xvg: two vertically stacked graphs with data from a single xvg file
+    -> 2 graphs, 2 xvg: two vertically stacked graphs with data from two xvg files
+    etc... 
 
-2. Columns of the xvg file(s) that should be used for plotting are defined for each graphs via 
-   the --upper_cols and --lower_cols options.
-   In case only one graph is to be plotted, only the --upper_col needs to be specified.
-   The format for specifying lines should be:
-    'xvg_file_nb:x_column_nb,y1_column_nb,y2_column_nb/xvg_file_nb:x_column_nb,y1_column_nb'
-   where the numbering of xvg file is 1-based and that of xvg columns is 0-based. As many y columns
-   as contained in the xvg files can be specified and you can use '-' to specify a range of
-   columns.
+2. Columns of the xvg file(s) that should be used for plotting are defined for each graph
+   via the --upper_cols and --lower_cols options. In case only one graph is to be plotted,
+   only the --upper_col needs to be specified.
+   
+   The format for specifying the plots should be:
+    -> 'xvg_file_nb:x_col_nb,y1_col_nb,y2_col_nb/xvg_file_nb:x_col_nb,y1_col_nb'
+   where the numbering of xvg file is 1-based and that of xvg columns is 0-based. As many
+   y columns as contained in the xvg files can be specified and you can use '-' to specify
+   a range of columns.
  
    Examples:
-    -1 graph, 1 xvg: --upper_cols 1:0,1,3-5
-    -1 graph, 2 xvg: --upper_cols 1:0,1,4/2:0,1,2,3
-    -2 graphs, 1 xvg: --upper_cols 1:0,1,2 --lower_cols 1:0,3-5
-    -2 graphs, 2 xvg: --upper_cols 1:0,1,2/2:0,1,2 --lower_cols 1:0,1,3-7,10
+    -> 1 graph, 1 xvg: '--upper_cols 1:0,1,3-5'
+    -> 1 graph, 2 xvg: '--upper_cols 1:0,1,4/2:0,1,2,3'
+    -> 2 graphs, 1 xvg: '--upper_cols 1:0,1,2 --lower_cols 1:0,3-5'
+    -> 2 graphs, 2 xvg: '--upper_cols 1:0,1,2/2:0,1,2 --lower_cols 1:0,1,3-7,10'
 
-3. The strings for the axis labels and plot titles of the graphs can be defined in a way similar to
-   that explained in note 2 above with the exception that quotation marks must be used. The graphs
-   are referred to with numbers with the upper being 1 and the lower one being 2.
-   If 2 plots are specified and if the options --xlabel, --ylabel or --title are specified they must
-   be defined for both plots - i.e. you either specify it for the two plots or none.
+3. The strings for the axis labels and titles of the graphs can be defined in a way
+   similar to that explained in note 2 above with the exception that quotation marks must
+   be used. The graphs are referred to with numbers - the upper one is '1' and the lower
+   one is '2'.
+   If 2 graphs are specified and if the options --xlabel, --ylabel or --titles are
+   specified they must be defined for both plots - i.e. you either specify it for the two
+   graphs or none.
 
    Example: 
-    -2 graphs, 2 xvg: --xlabel "1:x_upper/2:x_lower" --ylabel "1:y_upper/2:y_lower"
+    -> 2 graphs, 2 xvg: '--xlabel "1:x_upper/2:x_lower" --ylabel "1:y_upper/2:y_lower"'
 
-4. A text file can be supplied to define the legend and the colour to be used for each line plotted.
-   The information in this text file should be placed on single lines with the following format:
-    xvg_file_nb,xvg_column_nb,column_name,column_colour
-   (xvg_file_nb is 1 based and xvg_column_nb is 0 based and colours can be specified as hexadecimal)
-   code or standard matplotlib one letter code). This means that a given column in an xvg file
-   will be represented the same way in both the upper and lower graph (if present).
+4. A text file can be supplied to define the legend and the colour to be used for each
+   line plotted. The information in this text file should be placed on single lines with
+   the following format:
+    -> 'xvg_file_nb,xvg_column_nb,column_name,column_colour'
+   Colours can be specified as hexadecimal or standard matplotlib one letter code. This
+   means that a given column in an xvg file will be represented the same way in both the
+   upper and lower graph (if present).
    
    Example:
     xvgfilename1,1,POPC,r
@@ -123,12 +121,12 @@ it with the pngs created (not rocket science but a convenient shortcut:).
    Example:
     --upper_range "x:0,auto/y:-0.5,1"
 
-7. Several utlitily exist to concatenate png into movies, ffmpeg, and avconv are two popular ones.
+7. Several utitily exist to concatenate png into movies, ffmpeg, and avconv are two popular ones.
    Each come with its own set of options but a command similar to the one below should work:
    
    avconv -qscale 0 -r your_frame_rate -i xvg_graph_%05d.png -c:v libx264 -c:a copy xvg_movie.mp4
 
-[ Usage ]
+[ USAGE ]
 	
 Option	      Default  	Description                    
 -----------------------------------------------------
@@ -191,8 +189,9 @@ parser.add_argument('--version', action='version', version='%(prog)s v' + versio
 #deal with help
 parser.add_argument('-h','--help', action='help', help=argparse.SUPPRESS)
 
-#store inputs
-#============
+#=======================================================================
+# store inputs
+#=======================================================================
 args=parser.parse_args()
 args.colour_file=args.colour_file[0]
 args.output_folder=args.output_folder[0]
@@ -212,8 +211,46 @@ args.fig_size=args.fig_size[0]
 args.fig_dpi=args.fig_dpi[0]
 args.avconv_duration=args.avconv_duration[0]
 
-#sanity check
-#============
+#=======================================================================
+# import modules (doing it now otherwise might crash before we can display the help menu!)
+#=======================================================================
+
+#generic science modules
+try:
+	import math
+except:
+	print "Error: you need to install the maths module."
+	sys.exit(1)
+try:
+	import numpy
+except:
+	print "Error: you need to install the numpy module."
+	sys.exit(1)
+try:
+	import scipy
+except:
+	print "Error: you need to install the scipy module."
+	sys.exit(1)
+try:
+	import matplotlib as mpl
+	mpl.use('Agg')
+	import matplotlib.cm as cm				#colours library
+	import matplotlib.ticker
+	from matplotlib.ticker import MaxNLocator
+	from matplotlib.font_manager import FontProperties
+	fontP=FontProperties()
+except:
+	print "Error: you need to install the matplotlib module."
+	sys.exit(1)
+try:
+	import pylab as plt
+except:
+	print "Error: you need to install the pylab module."
+	sys.exit(1)
+
+#=======================================================================
+# sanity check
+#=======================================================================
 for f in args.xvg_names:
 	if not os.path.isfile(f):
 		print "Error: file " + str(f) + " not found."
@@ -228,8 +265,10 @@ if args.lines_lower!="no" and args.nb_graphs==1:
 	print "Error: --lower_col specified but only one graph specfied."
 	sys.exit(1)
 
-#create folders and log file
-#===========================
+#=======================================================================
+# create folders and log file
+#=======================================================================
+
 if args.output_folder=="no":
 	args.output_folder="xvg_animate_" + args.xvg_names[0][:-4]
 if os.path.isdir(args.output_folder):
@@ -256,6 +295,7 @@ else:
 		shutil.copy2(f,args.output_folder + "/")
 	if args.colour_file!="no":
 		shutil.copy2(args.colour_file,args.output_folder + "/")
+
 
 ################################################################################################################################################
 # FUNCTIONS
